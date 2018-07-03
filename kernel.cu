@@ -82,6 +82,9 @@ __global__ void middle_kernel(int *univ, int h, int w, int p_id, int *new_univ) 
 			game_of_life(univ, w, size, id, new_univ);
 
 		}
+		else {
+			new_univ[id] = 0;
+		}
 	}
 }
 
@@ -125,12 +128,20 @@ void print_array(int arr[], int w, int size) {
 	printf("\n");
 }
 
-void create_universe(int *univ, int size, float prob) {
-	// Randomly seed universe
+void create_universe(int *univ, int h, int w, float prob) {
 	float rand_prob;
-	for (int i = 0; i < size; i++) {
-		rand_prob = (float) rand() / RAND_MAX;
-		univ[i] = rand_prob > prob ? 0 : 1;
+
+	for (int i = 0; i < h; i++) {
+		for (int j = 0; j < w; j++) {
+			int k = (i * w) + j;
+			if (i == 0 || j == 0 || i == h - 1 || j == w - 1) {
+				univ[k] = 0;
+			}
+			else {
+				rand_prob = (float)rand() / RAND_MAX;
+				univ[k] = rand_prob > prob ? 0 : 1;
+			}
+		}
 	}
 }
 
@@ -179,7 +190,7 @@ int main(int argc, char **argv)
 	cudaMalloc((void**)&d_univ, size * sizeof(int));
 	cudaMalloc((void**)&d_new_univ, size * sizeof(int));
 
-	create_universe(h_univ, size, 0.15);
+	create_universe(h_univ, h, w, 0.15);
 
 	size_t n_threads = size > NUM_THREADS ? NUM_THREADS : size;
 	unsigned n_blocks = size > NUM_THREADS ? (unsigned)size / NUM_THREADS : (unsigned)1;
